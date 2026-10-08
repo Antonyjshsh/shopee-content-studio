@@ -1,0 +1,20 @@
+name: Diagnostico do identificador TikTok
+on:
+  push:
+    paths:
+      - '.github/workflows/diag-tiktok-user.yml'
+permissions:
+  contents: read
+jobs:
+  get-id:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python -m pip install -U yt-dlp
+      - run: |
+          yt-dlp --skip-download --dump-json "https://vt.tiktok.com/ZSbpbqjY6/" > /tmp/meta.json
+          python - <<'PY'
+          import json
+          obj=json.load(open('/tmp/meta.json'))
+          for k in ['id','channel_id','uploader_id','uploader','channel','channel_url','creator','webpage_url']:
+            print(k,':',obj.get(k))
+          PY
