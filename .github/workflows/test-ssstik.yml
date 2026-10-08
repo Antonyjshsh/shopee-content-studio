@@ -1,0 +1,41 @@
+name: Testar SSSTik em video autorizado
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-ssstik.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - run: python -m pip install requests beautifulsoup4
+      - name: Consultar SSSTik e testar MP4
+        shell: bash
+        run: |
+          python - <<'PY'
+          import requests,re,html
+          from bs4 import BeautifulSoup
+          target='https://vt.tiktok.com/ZSbpbqjY6/'
+          s=requests.Session()
+          s.headers['User-Agent']='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36'
+          try:
+              homepage=s.get('https://ssstik.io/en',timeout=20)
+              print('SSSTik home:',homepage.status_code,'HTML length:',len(homepage.content))
+              m=re.search(r"tt\s*:\s*['\"]([\w-]+)['\"]",homepage.text)
+              print('Token found:',bool(m))
+              if not m: raise RuntimeError('SSSTik form token missing')
+              res=s.post('https://ssstik.io/abc?url=dl',data={'id':target,'locale':'en','tt':m.group(1)},headers={'HX-Request':'true','HX-Target':'target','HX-Trigger':'_gcaptcha_pt','Referer':'https://ssstik.io/en','Origin':'https://ssstik.io'},timeout=35)
+              soup=BeautifulSoup(res.text,'html.parser')
+              urls=[a.get('href','') for a in soup.find_all('a',href=True)]
+              media=[u for u in urls if 'ssstik' in u or 'ssscdn' in u or 'tikcdn' in u or 'download' in u.lower()]
+              print('SSSTik result:',res.status_code,'HTML length:',len(res.content),'media links:',len(media))
+              print('Response text excerpt:',soup.get_text(' ',strip=True)[:300])
+              if not media: raise RuntimeError('No media download link returned')
+              print('Media link detected; integration candidate confirmed.')
+          except Exception as e:
+              print('FAIL:',type(e).__name__,str(e)[:250])
+              raise
+          PY
