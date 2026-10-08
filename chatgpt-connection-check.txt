@@ -1,0 +1,1 @@
+Teste de acesso de escrita autorizado pelo proprietário do repositório. Pode ser removido após a verificação.
