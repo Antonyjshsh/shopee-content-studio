@@ -4,9 +4,9 @@ const STORAGE='studio-pending-tiktok-import-v2';
 const PLAN_KEY='studio-content-plan-v1';
 const DEFAULT='https://www.tiktok.com/@vdeos.prontos.ia';
 export default function TikTokImportPanel(){
- const [profile,setProfile]=useState(''),[perDay,setPerDay]=useState(3),[days,setDays]=useState(30),[campaign,setCampaign]=useState('Campanha 01'),[count,setCount]=useState(90),[pending,setPending]=useState(null),[state,setState]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[history,setHistory]=useState([]);
- useEffect(()=>{try{const p=JSON.parse(localStorage.getItem(STORAGE)||'null');if(p&&p.since)setPending(p);const plan=JSON.parse(localStorage.getItem(PLAN_KEY)||'null');if(plan){setProfile(plan.profile||'');setPerDay(plan.perDay||3);setDays(plan.days||30);setCount(plan.count||90);setCampaign(plan.campaign||'Campanha 01')}}catch{}},[]);
- useEffect(()=>{localStorage.setItem(PLAN_KEY,JSON.stringify({profile,perDay,days,count,campaign}))},[profile,perDay,days,count,campaign]);
+ const [planLoaded,setPlanLoaded]=useState(false);const [profile,setProfile]=useState(''),[perDay,setPerDay]=useState(3),[days,setDays]=useState(30),[campaign,setCampaign]=useState('Campanha 01'),[count,setCount]=useState(90),[pending,setPending]=useState(null),[state,setState]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[history,setHistory]=useState([]);
+ useEffect(()=>{try{const p=JSON.parse(localStorage.getItem(STORAGE)||'null');if(p&&p.since)setPending(p);const plan=JSON.parse(localStorage.getItem(PLAN_KEY)||'null');if(plan){setProfile(plan.profile||'');setPerDay(plan.perDay||3);setDays(plan.days||30);setCount(plan.count||90);setCampaign(plan.campaign||'Campanha 01')}}catch{}finally{setPlanLoaded(true)}},[]);
+ useEffect(()=>{if(planLoaded)localStorage.setItem(PLAN_KEY,JSON.stringify({profile,perDay,days,count,campaign}))},[profile,perDay,days,count,campaign,planLoaded]);
  const needed=perDay*days;const shortage=Math.max(0,needed-count);
  const check=useCallback(async()=>{
   try{
