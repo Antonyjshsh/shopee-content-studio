@@ -17,7 +17,7 @@ jobs:
           set +e
           for user in naiindicaa1 vdeos.prontos.ia; do
             echo "PERFIL: $user"
-            gallery-dl --list-urls --range 1-8 "https://www.tiktok.com/@$user/posts" > "/tmp/gallery-$user.log" 2>&1
+            gallery-dl -g --range 1-8 "https://www.tiktok.com/@$user/posts" > "/tmp/gallery-$user.log" 2>&1
             code=$?
             echo "SAIDA: $code"
             grep -E 'tiktok.com/.*/video/[0-9]+' "/tmp/gallery-$user.log" | head -n 8 || true
