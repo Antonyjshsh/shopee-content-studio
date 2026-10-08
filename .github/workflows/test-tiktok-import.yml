@@ -21,6 +21,7 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p /tmp/tiktok-test
+          set +e
           yt-dlp \
             --playlist-end 3 \
             --max-downloads 3 \
@@ -35,6 +36,7 @@ jobs:
             "https://www.tiktok.com/@vdeos.prontos.ia" \
             > /tmp/yt-dlp-log.txt 2>&1
           code=$?
+          set -e
           echo "Exit status do extrator: $code"
           echo "Arquivos baixados no runner:"
           find /tmp/tiktok-test -maxdepth 1 -type f -printf '%f (%s bytes)\n'
