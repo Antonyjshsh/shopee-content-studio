@@ -16,3 +16,5 @@ for y in range(image.height):
             pixels[x, y] = (r, g, b, alpha)
 image.save(path, optimize=True)
 print(f"Logo PNG processada: {image.width}x{image.height}")
+
+# Gatilho inicial para executar a conversão automática.
