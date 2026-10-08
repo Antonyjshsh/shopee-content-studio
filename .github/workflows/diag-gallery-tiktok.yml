@@ -1,0 +1,26 @@
+name: Diagnosticar listagem TikTok com gallery-dl
+on:
+  push:
+    paths:
+      - '.github/workflows/diag-gallery-tiktok.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - run: python -m pip install -U gallery-dl 'yt-dlp[default,curl-cffi]'
+      - name: Testar descoberta de URLs publicas
+        shell: bash
+        run: |
+          set +e
+          for user in naiindicaa1 vdeos.prontos.ia; do
+            echo "PERFIL: $user"
+            gallery-dl --list-urls --range 1-8 "https://www.tiktok.com/@$user/posts" > "/tmp/gallery-$user.log" 2>&1
+            code=$?
+            echo "SAIDA: $code"
+            grep -E 'tiktok.com/.*/video/[0-9]+' "/tmp/gallery-$user.log" | head -n 8 || true
+            tail -n 5 "/tmp/gallery-$user.log" | cut -c 1-220
+            echo "--"
+          done
