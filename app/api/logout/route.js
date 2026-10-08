@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createSession, cookieName, cookieOptions, isCorrectPassword } from '../../../lib/session';
-export const runtime = 'nodejs';
+import { cookieName, cookieOptions } from '../../../lib/session';
 export async function POST(request) {
-  const type = request.headers.get('content-type') || '';
-  if (!type.includes('application/json')) return NextResponse.json({error:'Formato inválido.'},{status:415});
-  let body;
-  try { body = await request.json(); } catch { return NextResponse.json({error:'Dados inválidos.'},{status:400}); }
-  if (typeof body.password !== 'string' || body.password.length > 512 || !isCorrectPassword(body.password)) {
-    return NextResponse.json({error:'Senha inválida.'},{status:401,headers:{'Cache-Control':'no-store'}});
-  }
-  const response=NextResponse.json({ok:true},{headers:{'Cache-Control':'no-store'}});
-  response.cookies.set(cookieName,createSession(),cookieOptions);
+  if (request.headers.get('origin') !== new URL(request.url).origin) return NextResponse.json({error:'Origem inválida.'},{status:403});
+  const response=NextResponse.redirect(new URL('/',request.url),303);
+  response.cookies.set(cookieName,'',{...cookieOptions,maxAge:0});
+  response.headers.set('Cache-Control','no-store');
   return response;
 }
