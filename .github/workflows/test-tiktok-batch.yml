@@ -1,0 +1,30 @@
+name: TikTok teste de lote autorizado
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-tiktok-batch.yml'
+permissions:
+  contents: read
+jobs:
+  test-batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: python -m pip install -U 'yt-dlp[default,curl-cffi]'
+      - name: Testar tres videos do perfil
+        shell: bash
+        run: |
+          mkdir -p /tmp/tiktok-batch
+          for video in 7680346336255905045 7680316485851417877 7680257207417490709; do
+            echo "TESTANDO ID: $video"
+            yt-dlp --no-playlist --socket-timeout 20 --retries 1 --fragment-retries 1 \
+              -o "/tmp/tiktok-batch/%(id)s.%(ext)s" \
+              "https://www.tiktok.com/@vdeos.prontos.ia/video/$video" \
+              > "/tmp/result-$video.txt" 2>&1 || true
+            test -f "/tmp/tiktok-batch/$video.mp4" && echo "SUCESSO: $video" || { echo "FALHOU: $video"; tail -n 4 "/tmp/result-$video.txt"; }
+          done
+          count=$(find /tmp/tiktok-batch -type f -name '*.mp4' | wc -l)
+          echo "TOTAL MP4: $count / 3"
+          find /tmp/tiktok-batch -type f -printf '%f (%s bytes)\n'
+          test "$count" -ge 1
