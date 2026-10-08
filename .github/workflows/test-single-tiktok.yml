@@ -1,0 +1,28 @@
+name: Testar video TikTok individual
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-single-tiktok.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Instalar yt-dlp
+        run: python -m pip install --upgrade 'yt-dlp[default,curl-cffi]'
+      - name: Testar video autorizado
+        shell: bash
+        run: |
+          mkdir -p /tmp/single-test
+          set +e
+          yt-dlp --no-playlist --max-downloads 1 --socket-timeout 20 --retries 1 --fragment-retries 1 -o "/tmp/single-test/%(id)s.%(ext)s" "https://vt.tiktok.com/ZSbpbqjY6/" > /tmp/single-result.txt 2>&1
+          result=$?
+          set -e
+          echo "Exit status: $result"
+          find /tmp/single-test -maxdepth 1 -type f -printf '%f (%s bytes)\n'
+          echo "Diagnostico:"
+          tail -n 20 /tmp/single-result.txt
+          test "$(find /tmp/single-test -maxdepth 1 -type f | wc -l)" -ge 1
