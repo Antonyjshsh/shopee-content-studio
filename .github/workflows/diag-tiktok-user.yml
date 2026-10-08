@@ -9,7 +9,7 @@ jobs:
   get-id:
     runs-on: ubuntu-latest
     steps:
-      - run: python -m pip install -U yt-dlp
+      - run: python -m pip install -U 'yt-dlp[default,curl-cffi]'
       - run: |
           yt-dlp --skip-download --dump-json "https://vt.tiktok.com/ZSbpbqjY6/" > /tmp/meta.json
           python - <<'PY'
