@@ -1,0 +1,71 @@
+name: Importar lote TikTok autorizado
+on:
+  workflow_dispatch:
+    inputs:
+      perfil:
+        description: "Perfil TikTok autorizado (apenas @usuario)"
+        required: true
+        default: "vdeos.prontos.ia"
+        type: string
+      quantidade:
+        description: "Quantidade de vídeos (1-100)"
+        required: true
+        default: "3"
+        type: string
+permissions:
+  contents: read
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Instalar extrator
+        run: python -m pip install --upgrade 'yt-dlp[default,curl-cffi]'
+      - name: Listar e baixar vídeos de perfil autorizado
+        env:
+          TIKTOK_PROFILE: ${{ inputs.perfil }}
+          TIKTOK_COUNT: ${{ inputs.quantidade }}
+        shell: bash
+        run: |
+          cat > /tmp/import.py <<'PY'
+          import json,os,re,subprocess,pathlib,time
+          handle=os.environ['TIKTOK_PROFILE'].strip().lstrip('@')
+          if not re.fullmatch(r'[A-Za-z0-9._]{1,40}',handle):
+              raise ValueError('Perfil inválido')
+          count=int(os.environ['TIKTOK_COUNT'])
+          if not 1 <= count <= 100: raise ValueError('Limite permitido: 1-100')
+          root=pathlib.Path('/tmp/tiktok-import');root.mkdir(exist_ok=True)
+          profile=f'https://www.tiktok.com/@{handle}'
+          print('Consultando perfil',profile,'limite',count,flush=True)
+          cmd=['yt-dlp','--flat-playlist','--dump-single-json','--playlist-end',str(count),profile]
+          listing=subprocess.run(cmd,capture_output=True,text=True,timeout=120)
+          if listing.returncode!=0:
+              print('Erro de listagem:',listing.stderr[-900:],flush=True)
+              raise RuntimeError('Perfil não foi listado')
+          entries=json.loads(listing.stdout).get('entries') or []
+          ids=[]
+          for e in entries:
+              vid=str(e.get('id',''))
+              if re.fullmatch(r'\d{15,22}',vid) and vid not in ids: ids.append(vid)
+          print('IDs encontrados:',len(ids),flush=True)
+          success=0
+          for i,vid in enumerate(ids[:count],1):
+              url=f'https://www.tiktok.com/@{handle}/video/{vid}'
+              print(f'Baixando {i}/{min(count,len(ids))}: {vid}',flush=True)
+              res=subprocess.run(['yt-dlp','--no-playlist','--retries','1','--fragment-retries','1','--socket-timeout','20','-o',str(root/'%(id)s.%(ext)s'),url],capture_output=True,text=True,timeout=100)
+              found=list(root.glob(vid+'.*'))
+              if found:
+                  success+=1
+              else:
+                  print('Falha no video',vid,res.stderr[-220:],flush=True)
+          print('DOWNLOADS CONFIRMADOS:',success,'/',len(ids),flush=True)
+          if success==0:raise RuntimeError('Nenhum MP4 foi baixado')
+          PY
+          python /tmp/import.py
+      - name: Disponibilizar lote temporario para importacao no Studio
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos-tiktok-autorizados
+          path: /tmp/tiktok-import/*.mp4
+          if-no-files-found: error
+          retention-days: 1
