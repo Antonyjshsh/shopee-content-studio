@@ -1,0 +1,48 @@
+name: TikTok importador - teste autorizado
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-tiktok-import.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Preparar yt-dlp
+        run: python -m pip install --upgrade yt-dlp
+      - name: Testar importacao de 3 videos autorizados
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p /tmp/tiktok-test
+          yt-dlp \
+            --playlist-end 3 \
+            --max-downloads 3 \
+            --match-filter "duration <= 240" \
+            --no-write-info-json \
+            --no-write-thumbnail \
+            --no-overwrites \
+            --socket-timeout 20 \
+            --retries 1 \
+            --fragment-retries 1 \
+            --output "/tmp/tiktok-test/%(id)s.%(ext)s" \
+            "https://www.tiktok.com/@vdeos.prontos.ia" \
+            > /tmp/yt-dlp-log.txt 2>&1
+          code=$?
+          echo "Exit status do extrator: $code"
+          echo "Arquivos baixados no runner:"
+          find /tmp/tiktok-test -maxdepth 1 -type f -printf '%f (%s bytes)\n'
+          count=$(find /tmp/tiktok-test -maxdepth 1 -type f | wc -l)
+          echo "Quantidade de arquivos: $count"
+          echo "Saida diagnostica (ultimas 18 linhas):"
+          tail -n 18 /tmp/yt-dlp-log.txt | sed -E 's/(Cookie|Authorization|token)([^ ]*)/[redacted]/Ig'
+          test "$count" -ge 1
+      - name: Privacidade
+        if: always()
+        run: echo "Os videos de teste ficaram somente no ambiente temporario do job e nao foram enviados ao repositorio nem publicados como artefatos."
