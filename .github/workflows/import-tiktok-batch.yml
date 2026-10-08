@@ -40,7 +40,9 @@ jobs:
           root=pathlib.Path('/tmp/tiktok-import');root.mkdir(exist_ok=True)
           profile=f'https://www.tiktok.com/@{handle}'
           print('Consultando perfil',profile,'limite',count,flush=True)
-          cmd=['yt-dlp','--flat-playlist','--dump-single-json','--playlist-end',str(count),profile]
+          channel_ids={'vdeos.prontos.ia':'MS4wLjABAAAAo1Tthg49Ej73pJiQE3DpyVk-wPaq_pjIm2qBkANkLzVJIV0xX5ipc9YT_5jhS4Ds'}
+          listing_url=('tiktokuser:'+channel_ids[handle]) if handle in channel_ids else profile
+          cmd=['yt-dlp','--flat-playlist','--dump-single-json','--playlist-end',str(count),listing_url]
           listing=subprocess.run(cmd,capture_output=True,text=True,timeout=120)
           if listing.returncode!=0:
               print('Erro de listagem:',listing.stderr[-900:],flush=True)
