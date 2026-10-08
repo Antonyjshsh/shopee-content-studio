@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {list,put} from '@vercel/blob';
-import {studioAuthorized} from '../../../../lib/studio-auth';
+import {studioAuthorized} from '../../../lib/studio-auth';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function GET(){
